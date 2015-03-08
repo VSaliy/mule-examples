@@ -17,9 +17,9 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
     <flow name="JsonService" doc:name="JsonService">
         <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP /reporters" path="reporters"/>
         <logger message="Request to products #[payload]" level="INFO" doc:name="Log request"/>
-        <db:update config-ref="MySQL_Configuration" doc:name="Select all reporters">
+        <db:select config-ref="MySQL_Configuration" doc:name="Select all reporters">
             <db:parameterized-query><![CDATA[select name, description from reporters]]></db:parameterized-query>
-        </db:update>
+        </db:select>
         <json:object-to-json-transformer doc:name="Object to JSON"/>
     </flow>
     <flow name="ProxyForSolitRss" doc:name="ProxyForSolitRss">
