@@ -15,11 +15,11 @@ http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
     <db:mysql-config name="MySQL_Configuration" host="localhost" port="3306" user="root" password="root" database="mule" doc:name="MySQL Configuration"/>
     <flow name="JsonService" doc:name="JsonService">
-        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP /products" path="products"/>
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP /reporters" path="reporters"/>
         <logger message="Request to products #[payload]" level="INFO" doc:name="Log request"/>
-        <db:select config-ref="MySQL_Configuration" doc:name="Select all products">
-            <db:parameterized-query><![CDATA[select name, description, price from products]]></db:parameterized-query>
-        </db:select>
+        <db:update config-ref="MySQL_Configuration" doc:name="Select all reporters">
+            <db:parameterized-query><![CDATA[select name, description from reporters]]></db:parameterized-query>
+        </db:update>
         <json:object-to-json-transformer doc:name="Object to JSON"/>
     </flow>
     <flow name="ProxyForSolitRss" doc:name="ProxyForSolitRss">
