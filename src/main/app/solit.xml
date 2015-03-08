@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+    <db:mysql-config name="MySQL_Configuration" host="localhost" port="3306" user="root" password="root" database="mule" doc:name="MySQL Configuration"/>
+    <flow name="JsonService" doc:name="JsonService">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP /products" path="products"/>
+        <logger message="Request to products #[payload]" level="INFO" doc:name="Log request"/>
+        <db:select config-ref="MySQL_Configuration" doc:name="Select all products">
+            <db:parameterized-query><![CDATA[select name, description, price from products]]></db:parameterized-query>
+        </db:select>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+    </flow>
+    <flow name="ProxyForSolitRss" doc:name="ProxyForSolitRss">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" path="solit/rss" doc:name="HTTP /solit/rss"/>
+        <set-variable variableName="mode" value="#[message.inboundProperties['http.relative.path']]" doc:name="Check mode"/>
+        <http:outbound-endpoint exchange-pattern="request-response" method="GET" address="http://solit.isoligorsk.org/feed/" mimeType="text/xml" doc:name="HTTP to solit.isoligorsk.com"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.mode == 'json']">
+                <json:xml-to-json-transformer doc:name="XML to JSON"/>
+            </when>
+            <when expression="#[flowVars.mode == 'xml']">
+                <echo-component doc:name="Echo XML as is"/>
+            </when>
+            <otherwise>
+                <set-payload value="&lt;error&gt;Please specify format: &quot;http://localhost:8081/solit/rss/{xml or json}&quot;&lt;/error&gt;" doc:name="Write &quot;Please specify format&quot;"/>
+            </otherwise>
+        </choice>
+    </flow>
+</mule>
